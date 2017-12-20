@@ -780,7 +780,7 @@ eightShannon <- function(target, ACC){
       chicken != "" & frog != "" & fish != ""){
     
     seqs <- seqbind(target, chimp, gorilla, rat, cow, chicken, frog, fish, blank="-")
-    vert <- seqaln(seqs, id= c("target", "chimp", "gorilla","rat","cow","chicken","frog", "fish"), exefile="./muscle")
+    vert <- seqaln(seqs, id= c("target", "chimp", "gorilla","rat","cow","chicken","frog", "fish"), exefile="muscle")
     system("rm aln.fa") # Unix
     # system("cmd.exe", input = "del aln.fa") # Windows
     
