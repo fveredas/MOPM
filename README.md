@@ -44,37 +44,36 @@ computer with the name "pdbID_MOPM.Rda"
 ## Dependencies 
 
 Make sure you have installed the following R packages:
-install.packages("bio3d")
-install.packages("httr")
-install.packages("Rpdb")
-install.packages("RCurl")
-install.packages("bitops")
-install.packages("caret")
-install.packages("randomForest")
-install.packages("ipred")
-In addition, you will need to install MUSCLE and DSSP. To this end,
-you may wish to follow the indications given at:
-http://thegrantlab.org/bio3d/tutorials/installing-bio3d
+- install.packages("bio3d")
+- install.packages("httr")
+- install.packages("Rpdb")
+- install.packages("RCurl")
+- install.packages("bitops")
+- install.packages("caret")
+- install.packages("randomForest")
+- install.packages("ipred")
+
+In addition, you will need to install MUSCLE and DSSP. To this end, you may wish to follow the indications given at: http://thegrantlab.org/bio3d/tutorials/installing-bio3d
 
 ## Working Directory
 
-Set the sorking directory
 In the same working directory where the current script is located, there must be found also 
 the following files:
-MOPM.R <-- main R script
-Methionine_Oxidation_Predictive_Model.R
-ToolBox.R
-dif.R
-pdb2acc.R
-Phosphorylation_site_dataset
-btaurus_orth.rda
-drerio_orth.rda
-ggallus_orth.rda
-ggorilla_orth.rda
-prdVars_log_SBF.RData
-prdVars_log_ext_SBF.RData
-preProc_final.Rdata
-ptroglodytes_orth.rda
-rf_final.Rda
-rnorvegicus_orth.rda
-xtropicalis_orth.rda
+
+- MOPM.R <-- main R script
+- Methionine_Oxidation_Predictive_Model.R
+- ToolBox.R
+- dif.R
+- pdb2acc.R
+- Phosphorylation_site_dataset
+- btaurus_orth.rda
+- drerio_orth.rda
+- ggallus_orth.rda
+- ggorilla_orth.rda
+- prdVars_log_SBF.RData
+- prdVars_log_ext_SBF.RData
+- preProc_final.Rdata
+- ptroglodytes_orth.rda
+- rf_final.Rda
+- rnorvegicus_orth.rda
+- xtropicalis_orth.rda
