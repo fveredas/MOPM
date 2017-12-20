@@ -1571,7 +1571,7 @@ phosphosite <- function(pdbID, Chain, email){
   library(bio3d)
   # source("/Users/JCA/Dropbox/Programacion/R/R_ToolBox/pdb2acc.R")
   source("pdb2acc.R")
-  ACC <- pdb2acc(pdbID, email)
+  ACC <- pdb2acc(pdbID, email)[1]
   # source("/Users/JCA/Dropbox/Programacion/R/R_ToolBox/dif.R")
   source("dif.R")
   dif <- dif(pdbID, Chain, email)
