@@ -77,3 +77,36 @@ the following files:
 - rf_final.Rda
 - rnorvegicus_orth.rda
 - xtropicalis_orth.rda
+
+## Calling the script
+
+Edit the `MOPM.R` file to set the PDB ID, protein's chain, email and probability cutoff, as follows:
+
+```R
+MOPM_results <- predict.MetO(pdbID = "3CWM",    # Protein's pdb identifier
+                chain = "A",                    # Protein's chain to be analysed
+                email = "user@server",          # Your email
+                cut = 0.5040)                   # Probability cutoff for "oxidised" prediction
+```
+
+Then, from a R session, source `MOPM.R` to run the script.
+
+```R
+source('MOPM.R')
+```
+
+You will get a dataframe `MOPM_results` with the results, like this:
+
+```
+  Met probability prediction
+1  87       0.110         No
+2 244       0.273         No
+3 245       0.062         No
+4 250       0.322         No
+5 266       0.134         No
+6 375       0.688        Yes
+7 382       0.524        Yes
+8 398       0.315         No
+9 409       0.180         No
+```
+
