@@ -1684,13 +1684,25 @@ phosphosite <- function(pdbID, Chain, email){
     
     # Closest pSer
     MetpSer <- sapply(pSer.pos, function(x) abs(x-Met))
-    ptmDF$closest_pS <- apply(MetpSer, 1, min)
+    if (is.null(dim(MetpSer))){
+      ptmDF$closest_pS <- min(MetpSer)
+    } else {
+      ptmDF$closest_pS <- apply(MetpSer, 1, min)
+    }
     # Closest pThr
     MetpThr <- sapply(pThr.pos, function(x) abs(x-Met))
-    ptmDF$closest_pT <- apply(MetpThr, 1, min)
+    if (is.null(dim(MetpThr))){
+      ptmDF$closest_pT <- min(MetpThr)
+    } else {
+      ptmDF$closest_pT <- apply(MetpThr, 1, min)
+    }
     # Closest pTyr
     MetpTyr <- sapply(pTyr.pos, function(x) abs(x-Met))
-    ptmDF$closest_pY <- apply(MetpTyr, 1, min)
+    if (is.null(dim(MetpTyr))){
+      ptmDF$closest_pY <- min(MetpTyr)
+    } else {
+      ptmDF$closest_pY <- apply(MetpTyr, 1, min)
+    }
     
     return(ptmDF)
   } else {
