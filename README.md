@@ -7,15 +7,15 @@ Copyright (c) 2017 Juan Carlos Aledo & Francisco J. Veredas
 
 MIT License
 
-Permision is hereby granted, free of charge, to any person obtaining a copy of 
+Permission is hereby granted, free of charge, to any person obtaining a copy of 
 this software and associated documentation files (the "Software", to deal in the
 Software without restriction), including without limitation the rights to use,
 copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the 
-Software, and to permitto whom the Software is furnished to do so, subjecto to
+Software, and to permit to whom the Software is furnished to do so, subject to
 the following conditions:
   
 The above copyright notice and this permission notice shall be included in all
-copies or substanctial portions of the Software.
+copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
@@ -27,21 +27,21 @@ THE SOFTWARE.
 
 ---
 
-## Brief summary of what this sofware does
+## Brief summary of what this software does
 
-The current program is an implimentation of the predictive model described in 
+The current program is an implementation of the predictive model described in 
 Neural Computing & Applications... It takes as input a PDB ID (the 4-character unique 
 identifier of every entry in the Protein Data Bank) and return a dataframe 
-with as many rows as methionine residues are found in the protein being anlyzed.
+with as many rows as methionine residues are found in the protein being analysed.
 For each methionine, this dataframe makes a prediction with respect to its 
-oxidation status ("Yes" if the residue is predicted to be oxidezed, and "No" otherwise). 
+oxidation status ("Yes" if the residue is predicted to be oxidized, and "No" otherwise). 
 Each prediction is accompanied by its probability. In addition, the value of the
-extrated features is also provided. The dataframe is saved as a Rda file in the user 
+extracted features is also provided. The dataframe is saved as a Rda file in the user 
 computer with the name "pdbID_MOPM.Rda"
 
 ---
 
-## Dependencies 
+## Package Dependencies 
 
 Make sure you have installed the following R packages:
 - install.packages("bio3d")
@@ -80,13 +80,13 @@ the following files:
 
 ## Calling the script
 
-Edit the `MOPM.R` file to set the PDB ID, protein's chain, email and probability cutoff, as follows:
+Edit the `MOPM.R` file to set the PDB ID, protein's chain, email and probability cut-off, as follows:
 
 ```R
 MOPM_results <- predict.MetO(pdbID = "3CWM",    # Protein's pdb identifier
                 chain = "A",                    # Protein's chain to be analysed
                 email = "user@server",          # Your email
-                cut = 0.5040)                   # Probability cutoff for "oxidised" prediction
+                cut = 0.5040)                   # Probability cut-off for "oxidised" prediction
 ```
 
 Then, from a R session, source `MOPM.R` to run the script.
