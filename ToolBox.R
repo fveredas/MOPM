@@ -1,4 +1,4 @@
-# ToolBox_16Dic17.R
+# ToolBox.R
 
 # Collection of R functions whose purpose is to assist us when computing features 
 # related to physico-chemical and biological properties of methionyl residues.
