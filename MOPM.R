@@ -32,7 +32,10 @@
 # oxidation status ("Yes" if the residue is predicted to be oxidezed, and "No" otherwise). 
 # Each prediction is accompanied by its probability. In addition, the value of the
 # extrated features is also provided. The dataframe is saved as a Rda file in the user 
-# computer with the name "pdbID_MOPM.Rda"
+# computer with the name "pdbID_MOPM.Rda".
+# (Note: this script has been optimised to be run at Unix computers. It also works at
+# MS Windows computers, although for a clean execution "system" in the .R scripts
+# should be changed for the corresponding commented options for Windows).
 # ------------------------------------------------------------------------------------
 
 # ----------------------------- Dependencies 
