@@ -446,7 +446,7 @@ alnID <- function(ids, sps){
 #######################################################################################
 
 ################ PDB_ID to ACC ########################################################
-# The following two functions work together to convert a PDB identifier into an 
+# The following two functions work together to convert a PDB identifier into an
 # UniProt accession number.
 
 extract_acc <- function(acc_id, ans){
@@ -462,20 +462,20 @@ extract_acc <- function(acc_id, ans){
 }
 
 pdb2acc <- function(pdbID, email){
-  
+
   require(httr)
-  
+
   uniprot_url <- "http://www.uniprot.org/uploadlists/"
-  
-  params <- list(from = 'PDB_ID', 
+
+  params <- list(from = 'PDB_ID',
                  to = 'ACC',
                  format = 'tab',
                  query = pdbID)
-  
+
   my_headers <- add_headers('User-Agent' = paste('R', email))
-  
+
   request <- GET(uniprot_url, query = params, my_headers)
-  
+
   ans <- content(request, 'text', encoding = "ISO-8859-1")
   extract_acc(pdbID, ans)
 }
@@ -528,107 +528,159 @@ factorB <- function(pdbID){
 # distinta a la que se recoge más abajo y que se encuentra en el script "ToolBox.R" que
 # se ha incluido en el paquete de ficheros proporcionado como material suplementario.
 
-# A partir de un fichero PDB analizamos qué residues están expuestos en superficie y 
-# cuáles se encuentran enterrados en el interior de la proteína. Esta función (accDSSP) 
-# toma como argumentos el identificador PDB de la estructura de una proteína 'id' y la
-# difrencia en enumeración entre la enumeración en el fichero pdb y la
-# enumeración de la estructura primaria en un fichero fasta; cuando no exista discrepancia
-# entre ambas enumeraciones, consignar dif = 0. El program devuelve tanto la supercie en
-# angstroms expueta al solvente (sasa) como la fracción de accesibilidad (acc), la cual 
-# se calcula dividiendo el valor de sasa calculado por la superficie que dicho aminoácido
-# tendría en un tripéptido tripéptido GXG con el esqueleto polipeptídico en una 
-# conformación extendida y la conformación de la cadena lateral la más frecuentemente 
-# observada en las proteínas (J. Mol. Biol. 196: 641-656).
-
-# Update 29 Sept 2017 Al correr esta función con id = "1CLL" dio error
-# problema con los iones CA, se introducen modificaciones en tres líneas
-# que están marcadas como MODIFICADO. Además, la opción met = F, nos da
-# la posibilidad de obtener la accesibilidad de todos los residuos y no sólo de Met.
-
-# Update 23 Oct 2017. Para que devuelva la accesibilidad de cada aminoácido
-# tanto cuando se analiza el complejo como cuando se analiza la subunidad de 
-# forma aislada (Esta última siempre ha de ser mayor)
-
-# Update 30 Oct 2017. Para que el fichero pdb se guarde/se lea en/desde el paso
-# actual en el que se esté trabajando. También para que las funciones apeladas
-# que puedan estar enmascaradas sean del paquete deseado.
 
 accDSSP <- function(id, dif, met = T, keepPDB = F){
   library(bio3d)
   pdbsplit(get.pdb(id)) # MODIFICADO 23-Oct-2017 
-  # complex <- read.pdb(paste("/Users/JCA/Dropbox/Programacion/R/R_ToolBox/", id, ".pdb", sep=""))
   complex <- bio3d::read.pdb(paste( id, ".pdb", sep=""))  # MODIFICADO 30 OCT
   
   pdb.seq <- aa321(complex$atom$resid[which(complex$atom$elety == "CA")])
+  posX <- which(pdb.seq == "X") # MODIFICADO 11 Mayo 2018. Posiciones en las que hay X
   pdb.seq <- pdb.seq[which(pdb.seq != "X")]
   
   cx <- dssp(complex)
   
   acc <- data.frame(Aa = pdb.seq)
-  acc$ResidNr <- complex$atom$resno[which(complex$atom$elety == "CA")][which(pdb.seq != "X")] + dif ## MODIFICADO
-  acc$Chain <- complex$atom$chain[which(complex$atom$elety == "CA")][which(pdb.seq != "X")] ## MODIFICADO
+  acc$ResidNr <- complex$atom$resno[which(complex$atom$elety 
+                                          == "CA")][which(pdb.seq != "X")] + dif ## MODIFICADO
   
+  acc$Chain <- complex$atom$chain[which(complex$atom$elety 
+                                        == "CA")][which(pdb.seq != "X")] ## MODIFICADO
+  
+  ## -------- MODIFICADO 30 Marz 2018  (inclusión)
+  if (length(cx$acc) < nrow(acc)){ # Si no se dispone de SASA para algún residuo
+    acc$check <- FALSE
+    sse <- cx$sse
+    nombres <- names(sse)
+    numeros <- c()
+    cadenas <- c()
+    for (i in 1:length(sse)){
+      numeros <- c(numeros, as.numeric(strsplit(nombres, split="_")[[i]][1])) + dif
+      cadenas <- c(cadenas, strsplit(nombres, split="_")[[i]][2])
+    }
+    num_cad <- paste(numeros, "_", cadenas, sep="")
+    for (i in 1:nrow(acc)){
+      target <- paste(acc$ResidNr[i], "_", acc$Chain[i], sep="")
+      if (target %in% num_cad){
+        acc$check[i] <- TRUE
+      }
+    }
+    acc <- acc[which(acc$check==T),-4]
+  }  else if (length(cx$acc) > nrow(acc)){ # ------- MODIFICADO el 11 Mayo  2018 (añadido)
+    # Si hay más SASA que residuos porque hemos eliminado X
+    cx$acc <- cx$acc[-posX]
+    cx$sse <- cx$sse[-posX]
+  } # ------- Fin de la inclusión de MODIFICADO 11 Mayo 2018
+  
+  acc$sse <- cx$sse
   acc$sasa <- cx$acc
   acc$acc <- -999
-  acc$acc[which(acc$Aa == "A")] <- round(acc$sasa[which(acc$Aa == "A")]/113, 3)
-  acc$acc[which(acc$Aa == "R")] <- round(acc$sasa[which(acc$Aa == "R")]/241, 3)
-  acc$acc[which(acc$Aa == "N")] <- round(acc$sasa[which(acc$Aa == "N")]/158, 3)
-  acc$acc[which(acc$Aa == "D")] <- round(acc$sasa[which(acc$Aa == "D")]/151, 3)
-  acc$acc[which(acc$Aa == "C")] <- round(acc$sasa[which(acc$Aa == "C")]/140, 3)
-  acc$acc[which(acc$Aa == "Q")] <- round(acc$sasa[which(acc$Aa == "Q")]/189, 3)
-  acc$acc[which(acc$Aa == "E")] <- round(acc$sasa[which(acc$Aa == "E")]/183, 3)
-  acc$acc[which(acc$Aa == "G")] <- round(acc$sasa[which(acc$Aa == "G")]/85, 3)
-  acc$acc[which(acc$Aa == "H")] <- round(acc$sasa[which(acc$Aa == "H")]/194, 3)
-  acc$acc[which(acc$Aa == "I")] <- round(acc$sasa[which(acc$Aa == "I")]/182, 3)
-  acc$acc[which(acc$Aa == "L")] <- round(acc$sasa[which(acc$Aa == "L")]/180, 3)
-  acc$acc[which(acc$Aa == "K")] <- round(acc$sasa[which(acc$Aa == "K")]/211, 3)
-  acc$acc[which(acc$Aa == "M")] <- round(acc$sasa[which(acc$Aa == "M")]/204, 3)
-  acc$acc[which(acc$Aa == "F")] <- round(acc$sasa[which(acc$Aa == "F")]/218, 3)
-  acc$acc[which(acc$Aa == "P")] <- round(acc$sasa[which(acc$Aa == "P")]/143, 3)
-  acc$acc[which(acc$Aa == "S")] <- round(acc$sasa[which(acc$Aa == "S")]/122, 3)
-  acc$acc[which(acc$Aa == "T")] <- round(acc$sasa[which(acc$Aa == "T")]/146, 3)
-  acc$acc[which(acc$Aa == "W")] <- round(acc$sasa[which(acc$Aa == "W")]/259, 3)
-  acc$acc[which(acc$Aa == "Y")] <- round(acc$sasa[which(acc$Aa == "Y")]/229, 3)
-  acc$acc[which(acc$Aa == "V")] <- round(acc$sasa[which(acc$Aa == "V")]/160, 3)
+  acc$acc[which(acc$Aa == "A")] <- 
+    round(acc$sasa[which(acc$Aa == "A")]/113, 3)
+  acc$acc[which(acc$Aa == "R")] <- 
+    round(acc$sasa[which(acc$Aa == "R")]/241, 3)
+  acc$acc[which(acc$Aa == "N")] <- 
+    round(acc$sasa[which(acc$Aa == "N")]/158, 3)
+  acc$acc[which(acc$Aa == "D")] <- 
+    round(acc$sasa[which(acc$Aa == "D")]/151, 3)
+  acc$acc[which(acc$Aa == "C")] <- 
+    round(acc$sasa[which(acc$Aa == "C")]/140, 3)
+  acc$acc[which(acc$Aa == "Q")] <- 
+    round(acc$sasa[which(acc$Aa == "Q")]/189, 3)
+  acc$acc[which(acc$Aa == "E")] <- 
+    round(acc$sasa[which(acc$Aa == "E")]/183, 3)
+  acc$acc[which(acc$Aa == "G")] <- 
+    round(acc$sasa[which(acc$Aa == "G")]/85, 3)
+  acc$acc[which(acc$Aa == "H")] <- 
+    round(acc$sasa[which(acc$Aa == "H")]/194, 3)
+  acc$acc[which(acc$Aa == "I")] <- 
+    round(acc$sasa[which(acc$Aa == "I")]/182, 3)
+  acc$acc[which(acc$Aa == "L")] <- 
+    round(acc$sasa[which(acc$Aa == "L")]/180, 3)
+  acc$acc[which(acc$Aa == "K")] <- 
+    round(acc$sasa[which(acc$Aa == "K")]/211, 3)
+  acc$acc[which(acc$Aa == "M")] <- 
+    round(acc$sasa[which(acc$Aa == "M")]/204, 3)
+  acc$acc[which(acc$Aa == "F")] <- 
+    round(acc$sasa[which(acc$Aa == "F")]/218, 3)
+  acc$acc[which(acc$Aa == "P")] <- 
+    round(acc$sasa[which(acc$Aa == "P")]/143, 3)
+  acc$acc[which(acc$Aa == "S")] <- 
+    round(acc$sasa[which(acc$Aa == "S")]/122, 3)
+  acc$acc[which(acc$Aa == "T")] <- 
+    round(acc$sasa[which(acc$Aa == "T")]/146, 3)
+  acc$acc[which(acc$Aa == "W")] <- 
+    round(acc$sasa[which(acc$Aa == "W")]/259, 3)
+  acc$acc[which(acc$Aa == "Y")] <- 
+    round(acc$sasa[which(acc$Aa == "Y")]/229, 3)
+  acc$acc[which(acc$Aa == "V")] <- 
+    round(acc$sasa[which(acc$Aa == "V")]/160, 3)
   
-  names(acc)[4] <- "sasa.complex"
-  names(acc)[5] <- "acc.complex"
+  names(acc)[5] <- "sasa.complex"
+  names(acc)[6] <- "acc.complex"
   
-  ## ---- Isolated subunits 
+  ## ---- Isolated subunits
   cadenas <- unique(complex$atom$chain)
   sacc <- sub.seq <- c()
   for (i in 1:length(cadenas)){
     current.chain <- cadenas[i]
     path <- paste("./split_chain/", id, "_", current.chain, ".pdb", sep="")
     single <- bio3d::read.pdb(path) # MODIFICADO 30 Oct, añadido el bio3d::
+    
+    sub.seq <- aa321(single$atom$resid[which(single$atom$elety == "CA")]) # AÑADIDO 11 Mayo 2018
+    posX <- which(sub.seq == "X") # AÑADIDO 11 Mayo 2018
+    sub.seq <- sub.seq[which(sub.seq != "X")] # AÑADIDO 11 Mayo 2018
     sx <- dssp(single)
+    if (length(sx$acc) > length(sub.seq)){ # AÑADIDO 11 Mayo 2018
+      sx$acc <- sx$acc[-posX]
+      sx$sse <- sx$sse[-posX]
+    } # Fin de la adición del 11 de Mayor 2018
     sacc <- c(sacc, sx$acc)
-    sub.seq <- c(sub.seq, aa321(single$atom$resid[which(single$atom$elety == "CA")]))
   }
   
-  if (sum(sub.seq == acc$Aa)/nrow(acc) == 1) {
+  if (length(sacc)/nrow(acc) == 1) { # MODIFICADO 30 MARZO 2018
     acc$sasa.subunit <- sacc
     acc$acc.subunit <- -999
-    acc$acc.subunit[which(acc$Aa == "A")] <- round(acc$sasa.subunit[which(acc$Aa == "A")]/113, 3)
-    acc$acc.subunit[which(acc$Aa == "R")] <- round(acc$sasa.subunit[which(acc$Aa == "R")]/241, 3)
-    acc$acc.subunit[which(acc$Aa == "N")] <- round(acc$sasa.subunit[which(acc$Aa == "N")]/158, 3)
-    acc$acc.subunit[which(acc$Aa == "D")] <- round(acc$sasa.subunit[which(acc$Aa == "D")]/151, 3)
-    acc$acc.subunit[which(acc$Aa == "C")] <- round(acc$sasa.subunit[which(acc$Aa == "C")]/140, 3)
-    acc$acc.subunit[which(acc$Aa == "Q")] <- round(acc$sasa.subunit[which(acc$Aa == "Q")]/189, 3)
-    acc$acc.subunit[which(acc$Aa == "E")] <- round(acc$sasa.subunit[which(acc$Aa == "E")]/183, 3)
-    acc$acc.subunit[which(acc$Aa == "G")] <- round(acc$sasa.subunit[which(acc$Aa == "G")]/85, 3)
-    acc$acc.subunit[which(acc$Aa == "H")] <- round(acc$sasa.subunit[which(acc$Aa == "H")]/194, 3)
-    acc$acc.subunit[which(acc$Aa == "I")] <- round(acc$sasa.subunit[which(acc$Aa == "I")]/182, 3)
-    acc$acc.subunit[which(acc$Aa == "L")] <- round(acc$sasa.subunit[which(acc$Aa == "L")]/180, 3)
-    acc$acc.subunit[which(acc$Aa == "K")] <- round(acc$sasa.subunit[which(acc$Aa == "K")]/211, 3)
-    acc$acc.subunit[which(acc$Aa == "M")] <- round(acc$sasa.subunit[which(acc$Aa == "M")]/204, 3)
-    acc$acc.subunit[which(acc$Aa == "F")] <- round(acc$sasa.subunit[which(acc$Aa == "F")]/218, 3)
-    acc$acc.subunit[which(acc$Aa == "P")] <- round(acc$sasa.subunit[which(acc$Aa == "P")]/143, 3)
-    acc$acc.subunit[which(acc$Aa == "S")] <- round(acc$sasa.subunit[which(acc$Aa == "S")]/122, 3)
-    acc$acc.subunit[which(acc$Aa == "T")] <- round(acc$sasa.subunit[which(acc$Aa == "T")]/146, 3)
-    acc$acc.subunit[which(acc$Aa == "W")] <- round(acc$sasa.subunit[which(acc$Aa == "W")]/259, 3)
-    acc$acc.subunit[which(acc$Aa == "Y")] <- round(acc$sasa.subunit[which(acc$Aa == "Y")]/229, 3)
-    acc$acc.subunit[which(acc$Aa == "V")] <- round(acc$sasa.subunit[which(acc$Aa == "V")]/160, 3)
+    acc$acc.subunit[which(acc$Aa == "A")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "A")]/113, 3)
+    acc$acc.subunit[which(acc$Aa == "R")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "R")]/241, 3)
+    acc$acc.subunit[which(acc$Aa == "N")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "N")]/158, 3)
+    acc$acc.subunit[which(acc$Aa == "D")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "D")]/151, 3)
+    acc$acc.subunit[which(acc$Aa == "C")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "C")]/140, 3)
+    acc$acc.subunit[which(acc$Aa == "Q")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "Q")]/189, 3)
+    acc$acc.subunit[which(acc$Aa == "E")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "E")]/183, 3)
+    acc$acc.subunit[which(acc$Aa == "G")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "G")]/85, 3)
+    acc$acc.subunit[which(acc$Aa == "H")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "H")]/194, 3)
+    acc$acc.subunit[which(acc$Aa == "I")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "I")]/182, 3)
+    acc$acc.subunit[which(acc$Aa == "L")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "L")]/180, 3)
+    acc$acc.subunit[which(acc$Aa == "K")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "K")]/211, 3)
+    acc$acc.subunit[which(acc$Aa == "M")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "M")]/204, 3)
+    acc$acc.subunit[which(acc$Aa == "F")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "F")]/218, 3)
+    acc$acc.subunit[which(acc$Aa == "P")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "P")]/143, 3)
+    acc$acc.subunit[which(acc$Aa == "S")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "S")]/122, 3)
+    acc$acc.subunit[which(acc$Aa == "T")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "T")]/146, 3)
+    acc$acc.subunit[which(acc$Aa == "W")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "W")]/259, 3)
+    acc$acc.subunit[which(acc$Aa == "Y")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "Y")]/229, 3)
+    acc$acc.subunit[which(acc$Aa == "V")] <- 
+      round(acc$sasa.subunit[which(acc$Aa == "V")]/160, 3)
     
   } else { stop("Check number residues")}
   
@@ -639,10 +691,8 @@ accDSSP <- function(id, dif, met = T, keepPDB = F){
   
   
   if (keepPDB == F) {
-    system(paste("rm ", id, ".pdb", sep="")) # Unix
-    system("rm -rf split_chain") # Unix
-    # system("cmd.exe", input = paste("del ", id, ".pdb", sep="")) # Windows
-    # system("cmd.exe", input = "rd /s /q split_chain") # Windows
+    system(paste("rm ", id, ".pdb", sep=""))
+    system("rm -rf split_chain")
   }
   
   
