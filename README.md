@@ -110,3 +110,6 @@ You will get a dataframe `MOPM_results` with the results, like this:
 9 409       0.180         No
 ```
 
+---
+
+*Important remark: this script has some limitations derived from the fact that it depends on tertiary-structure data that have to be downloaded online from public repositories (Uniprot). On the one hand, the tertiary-structure characteristics necessary to make methionine oxidation prediction have to be extracted from the PDB files that are due to be downloaded from Uniprot when the script is launched. This external dependency could make the script sometime unstable (due to technical issues or maintenance processes at Uniprot, unstable Internet connections, etc.). On the other hand, the tertiary structure of a certain protein could not be completely (or partially) known, which could make the script not to count on all the necessary information to extract the 3D features related to those methionine residues present in the protein.*
